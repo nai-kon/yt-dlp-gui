@@ -13,7 +13,7 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Video Downloader")
-        self.geometry("500x300")
+        self.geometry("500x250")
 
         # URL入力
         self.url_entry = ctk.CTkEntry(self, placeholder_text="URLを入力 or Ctrl+Vで貼り付け")
@@ -39,15 +39,15 @@ class App(ctk.CTk):
         self.download_button = ctk.CTkButton(self, text="ダウンロード", command=self.start_download)
         self.download_button.pack(padx=20, pady=5, fill="x")
 
+        # ステータステキストボックス
+        self.status_text = ctk.CTkTextbox(self, height=40)
+        self.status_text.pack(padx=20, pady=5, fill="both", expand=True)
+        self.status_text.configure(state="disabled")
+
         # プログレスバー
         self.progress = ctk.CTkProgressBar(self)
         self.progress.set(0)
-        self.progress.pack(padx=20, pady=5, fill="x")
-
-        # ステータステキストボックス
-        self.status_text = ctk.CTkTextbox(self, height=60)
-        self.status_text.pack(padx=20, pady=5, fill="both", expand=True)
-        self.status_text.configure(state="disabled")
+        self.progress.pack(padx=20, pady=(5, 10), fill="x")
 
     def start_download(self):
         url = self.url_entry.get().strip()
@@ -65,7 +65,8 @@ class App(ctk.CTk):
                 if d["status"] == "downloading":
                     self.progress.set(d.get("_percent", "0") / 100)
 
-            self.set_status(f"ダウンロードを開始: {url}")
+            self.download_button.configure(state="disabled")
+            self.set_status(f"情報取得中: {url}")
 
             try:
                 # 最初にメタ情報を取得して表示
@@ -102,8 +103,9 @@ class App(ctk.CTk):
             except Exception as e:
                 self.append_status("エラー発生")
                 tkinter.messagebox.showerror("エラー", f"ダウンロード中にエラーが発生しました。\n{e}")
-                self.progress.set(0)
-                return
+            
+            finally:
+                self.download_button.configure(state="normal")
 
         threading.Thread(target=run_download, args=(url,), daemon=True).start()
 
