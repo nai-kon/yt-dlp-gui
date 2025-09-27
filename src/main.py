@@ -1,4 +1,4 @@
-import json
+import os
 import threading
 import tkinter.filedialog
 import tkinter.messagebox
@@ -22,7 +22,7 @@ class App(ctk.CTk):
         # ディレクトリ選択（ボタンテキストに保存先を表示）
         self.config = ConfigManager()
         self.selected_dir = self.config.data.get("download_dir", None)
-        self.dir_button = ctk.CTkButton(self, text=f"保存先: {self.selected_dir if self.selected_dir else '未選択'}", command=self.select_directory, anchor="w")
+        self.dir_button = ctk.CTkButton(self, text=f"保存先: {self.selected_dir if self.selected_dir else '未選択'}", command=self.select_directory)
         self.dir_button.pack(padx=20, pady=10, fill="x")
 
         # アプリ上でCtrl+Vを押したときにURLを貼り付けてダウンロード開始
@@ -64,25 +64,46 @@ class App(ctk.CTk):
             def progress_hook(d):
                 if d["status"] == "downloading":
                     self.progress.set(d.get("_percent", "0") / 100)
-            
-            self.reset_status()
-            self.append_status(f"ダウンロードを開始: {url}")
 
-            options = {
-                "outtmpl": f"{self.selected_dir}/%(title)s.%(ext)s",
-                "progress_hooks": [progress_hook],
-            }
+            self.set_status(f"ダウンロードを開始: {url}")
 
-            with YoutubeDL(options) as ydl:
+            try:
                 # 最初にメタ情報を取得して表示
-                info = ydl.extract_info(url, download=False)
-                info = ydl.sanitize_info(info)
-                self.append_status(info["title"][:35] + "...")
+                with YoutubeDL() as ydl:
+                    info = ydl.extract_info(url, download=False)
+                    info = ydl.sanitize_info(info)
+                    self.set_status(info["title"][:35] + "...")
 
-                self.progress.set(0.01)  # 最初に少し進捗を表示
-                ydl.download(url)
+                # ダウンロード設定
+                options = {
+                    "outtmpl": f"{self.selected_dir}/%(title)s.%(ext)s",
+                    "progress_hooks": [progress_hook],
+                }
 
-            self.append_status("ダウンロード完了")
+                # xの場合はユーザー名をファイル名にする
+                if url.startswith("https://x.com/") and (uploader_id:= info.get("uploader_id", None)) is not None:
+                    if os.path.exists(f"{self.selected_dir}/{uploader_id}.mp4"):
+                        # ファイル名が重複したら連番を付与
+                        for i in range(1, 100):
+                            uploader_id = f"{uploader_id}_{i}"
+                            if not os.path.exists(f"{self.selected_dir}/{uploader_id}.mp4"):
+                                break
+                        else:
+                            raise Exception("同じユーザー名のファイルが多すぎます。")
+
+                    options["outtmpl"] = f"{self.selected_dir}/{uploader_id}.%(ext)s"
+
+                # ダウンロード実行
+                with YoutubeDL(options) as ydl:
+                    self.progress.set(0.01)  # 最初に少し進捗を表示
+                    ydl.download(url)
+                    self.append_status("ダウンロード完了")
+
+            except Exception as e:
+                self.append_status("エラー発生")
+                tkinter.messagebox.showerror("エラー", f"ダウンロード中にエラーが発生しました。\n{e}")
+                self.progress.set(0)
+                return
 
         threading.Thread(target=run_download, args=(url,), daemon=True).start()
 
@@ -91,6 +112,7 @@ class App(ctk.CTk):
         valid_prefixes = [
             "https://www.youtube.com/watch?v=",
             "https://www.youtube.com/shorts/",
+            "https://x.com/"
             # 今後追加可能
         ]
         return any(url.startswith(prefix) for prefix in valid_prefixes)
@@ -109,9 +131,10 @@ class App(ctk.CTk):
         self.status_text.see("end")
         self.status_text.configure(state="disabled")
 
-    def reset_status(self):
+    def set_status(self, message):
         self.status_text.configure(state="normal")
         self.status_text.delete("0.0", "end")
+        self.status_text.insert("end", message + "\n")
         self.status_text.configure(state="disabled")
 
 if __name__ == "__main__":
