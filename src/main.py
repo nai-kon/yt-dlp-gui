@@ -4,6 +4,7 @@ import tkinter.filedialog
 import tkinter.messagebox
 
 import customtkinter as ctk
+from PIL import ImageTk
 from yt_dlp import YoutubeDL
 
 from config_manager import ConfigManager
@@ -52,11 +53,9 @@ class App(ctk.CTk):
     def start_download(self):
         url = self.url_entry.get().strip()
         if not self.is_valid_url(url):
-            self.append_status(f"不正なURLです: {url}")
             tkinter.messagebox.showerror("エラー", f"不正なURLです。\n{url}")
             return
         if not self.selected_dir:
-            self.append_status("保存先ディレクトリを選択してください。")
             tkinter.messagebox.showerror("エラー", "保存先ディレクトリを選択してください。")
             return
 
@@ -72,7 +71,6 @@ class App(ctk.CTk):
                 # 最初にメタ情報を取得して表示
                 with YoutubeDL() as ydl:
                     info = ydl.extract_info(url, download=False)
-                    info = ydl.sanitize_info(info)
                     self.set_status(info["title"][:35] + "...")
 
                 # ダウンロード設定
@@ -96,7 +94,6 @@ class App(ctk.CTk):
 
                 # ダウンロード実行
                 with YoutubeDL(options) as ydl:
-                    self.progress.set(0.01)  # 最初に少し進捗を表示
                     ydl.download(url)
                     self.append_status("ダウンロード完了")
 
@@ -141,4 +138,6 @@ class App(ctk.CTk):
 
 if __name__ == "__main__":
     app = App()
+    app.wm_iconbitmap()
+    app.iconphoto(False, ImageTk.PhotoImage(file="logo.ico"))
     app.mainloop()

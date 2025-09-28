@@ -6,3 +6,6 @@ uv run pyinstaller build_mac.spec -y
 
 # remove temp folder
 rm -rf 'dist/Video Downloader/'
+
+# copy files
+cp -p "src/logo.ico" "./dist/"
