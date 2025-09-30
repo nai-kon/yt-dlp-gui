@@ -1,5 +1,6 @@
 import os
 import threading
+import tkinter
 import tkinter.filedialog
 import tkinter.messagebox
 
@@ -14,31 +15,34 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Video Downloader")
-        self.geometry("500x250")
+        self.geometry("550x300")
 
-        # URL入力
-        self.url_entry = ctk.CTkEntry(self, placeholder_text="URLを入力 or Ctrl+Vで貼り付け")
-        self.url_entry.pack(padx=20, pady=5, fill="x")
-
-        # ディレクトリ選択（ボタンテキストに保存先を表示）
+        # ディレクトリ選択（ラベル＋選択ボタンを横並びで表示）
         self.config = ConfigManager()
         self.selected_dir = self.config.data.get("download_dir", None)
-        self.dir_button = ctk.CTkButton(self, text=f"保存先: {self.selected_dir if self.selected_dir else '未選択'}", command=self.select_directory)
-        self.dir_button.pack(padx=20, pady=10, fill="x")
 
-        # アプリ上でCtrl+Vを押したときにURLを貼り付けてダウンロード開始
-        def global_paste(event=None):
-            text = self.clipboard_get()
-            if self.is_valid_url(text):
-                self.url_entry.delete(0, "end")
-                self.url_entry.insert(0, text)
-                self.start_download()
+        self.dir_frame = ctk.CTkFrame(self)
+        self.dir_frame.pack(padx=20, pady=10, fill="x")
 
-        self.bind_all("<Control-v>", global_paste)
+        self.dir_label = ctk.CTkLabel(
+            self.dir_frame,
+            text=f"保存先: {self.selected_dir if self.selected_dir else '未選択'}",
+            anchor="w"
+        )
+        self.dir_label.pack(side="left", fill="x", expand=True)
 
-        # ダウンロードボタン
-        self.download_button = ctk.CTkButton(self, text="ダウンロード", command=self.start_download)
-        self.download_button.pack(padx=20, pady=5, fill="x")
+        self.dir_button = ctk.CTkButton(self.dir_frame, text="選択", width=50, command=self.select_directory)
+        self.dir_button.pack(side="right", padx=(5, 0))
+
+        # URL入力 + ダウンロードボタンを右端に配置
+        self.url_frame = ctk.CTkFrame(self)
+        self.url_frame.pack(padx=20, pady=(10, 5), fill="x")
+
+        self.url_entry = ctk.CTkEntry(self.url_frame, placeholder_text="URLを入力 or Ctrl+Vで貼り付け")
+        self.url_entry.pack(side="left", fill="x", expand=True)
+
+        self.download_button = ctk.CTkButton(self.url_frame, text="開始", width=50, command=self.start_download)
+        self.download_button.pack(side="right", padx=(5, 0))
 
         # ステータステキストボックス
         self.status_text = ctk.CTkTextbox(self, height=40)
@@ -50,7 +54,27 @@ class App(ctk.CTk):
         self.progress.set(0)
         self.progress.pack(padx=20, pady=(5, 10), fill="x")
 
-    def start_download(self):
+        # アプリ上でCtrl+Vを押したときにURLを貼り付けてダウンロード開始
+        def global_paste(event=None):
+            text = self.clipboard_get()
+            if self.is_valid_url(text):
+                self.url_entry.delete(0, "end")
+                self.url_entry.insert(0, text)
+                self.start_download()
+
+        self.bind_all("<Control-v>", global_paste)
+
+        # ウィンドウがアクティブになったときにクリップボードにURLがあればDL開始
+        # def handle_window_activate(event=None):
+        #     global_paste()
+
+        # self.bind_all("<FocusIn>", handle_window_activate)
+
+
+        # 起動時にURLがあればDL開始
+        # global_paste()
+
+    def start_download(self) -> None:
         url = self.url_entry.get().strip()
         if not self.is_valid_url(url):
             tkinter.messagebox.showerror("エラー", f"不正なURLです。\n{url}")
@@ -59,7 +83,7 @@ class App(ctk.CTk):
             tkinter.messagebox.showerror("エラー", "保存先ディレクトリを選択してください。")
             return
 
-        def run_download(url: str):
+        def run_download(url: str) -> None:
             def progress_hook(d):
                 if d["status"] == "downloading":
                     self.progress.set(d.get("_percent", "0") / 100)
@@ -107,30 +131,30 @@ class App(ctk.CTk):
         threading.Thread(target=run_download, args=(url,), daemon=True).start()
 
     def is_valid_url(self, url: str) -> bool:
-        """対応するURLが有効かどうかをチェック"""
+        """対応URLかチェック"""
         valid_prefixes = [
             "https://www.youtube.com/watch?v=",
             "https://www.youtube.com/shorts/",
-            "https://x.com/"
-            # 今後追加可能
+            "https://x.com/",
+            "https://www.tiktok.com/"
         ]
         return any(url.startswith(prefix) for prefix in valid_prefixes)
 
-    def select_directory(self):
-        dir_path = tkinter.filedialog.askdirectory()
+    def select_directory(self) -> None:
+        dir_path = tkinter.filedialog.askdirectory(initialdir=self.selected_dir)
         if dir_path:
             self.selected_dir = dir_path
-            self.dir_button.configure(text=f"保存先: {dir_path}")
+            self.dir_label.configure(text=f"保存先: {dir_path}")
             self.config.data["download_dir"] = dir_path
             self.config.save()
 
-    def append_status(self, message):
+    def append_status(self, message: str) -> None:
         self.status_text.configure(state="normal")
         self.status_text.insert("end", message + "\n")
         self.status_text.see("end")
         self.status_text.configure(state="disabled")
 
-    def set_status(self, message):
+    def set_status(self, message: str) -> None:
         self.status_text.configure(state="normal")
         self.status_text.delete("0.0", "end")
         self.status_text.insert("end", message + "\n")
