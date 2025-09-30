@@ -75,6 +75,7 @@ class App(ctk.CTk):
         # global_paste()
 
     def start_download(self) -> None:
+        self.progress.set(0)
         url = self.url_entry.get().strip()
         if not self.is_valid_url(url):
             tkinter.messagebox.showerror("エラー", f"不正なURLです。\n{url}")
@@ -86,7 +87,8 @@ class App(ctk.CTk):
         def run_download(url: str) -> None:
             def progress_hook(d):
                 if d["status"] == "downloading":
-                    self.progress.set(d.get("_percent", "0") / 100)
+                    # self.progress.set(d.get("_percent", "0") / 100)  # the value jitters so dont use
+                    self.progress.set((d["fragment_index"] / d["fragment_count"]))
 
             self.download_button.configure(state="disabled")
             self.set_status(f"情報取得中: {url}")
