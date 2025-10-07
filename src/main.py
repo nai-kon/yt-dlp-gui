@@ -94,16 +94,16 @@ class App(ctk.CTk):
             self.set_status(f"情報取得中: {url}")
 
             try:
-                # 最初にメタ情報を取得して表示
-                with YoutubeDL() as ydl:
-                    info = ydl.extract_info(url, download=False)
-                    self.set_status(info["title"][:35] + "...")
-
-                # ダウンロード設定
                 options = {
                     "outtmpl": f"{self.selected_dir}/%(title)s.%(ext)s",
                     "progress_hooks": [progress_hook],
+                    "cookiesfrombrowser": ("firefox",),
                 }
+
+                # 最初にメタ情報を取得して表示
+                with YoutubeDL(options) as ydl:
+                    info = ydl.extract_info(url, download=False)
+                    self.set_status(info["title"][:35] + "...")
 
                 # xの場合はユーザー名をファイル名にする
                 if url.startswith("https://x.com/") and (uploader_id:= info.get("uploader_id", None)) is not None:
