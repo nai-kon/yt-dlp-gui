@@ -87,8 +87,8 @@ class App(ctk.CTk):
         def run_download(url: str) -> None:
             def progress_hook(d):
                 if d["status"] == "downloading":
-                    # self.progress.set(d.get("_percent", "0") / 100)  # the value jitters so dont use
-                    self.progress.set((d["fragment_index"] / d["fragment_count"]))
+                    # self.progress.set( / 100)  # the value jitters so dont use
+                    self.progress.set(d.get("downloaded_bytes", 0) / d.get("total_bytes", 1))
 
             self.download_button.configure(state="disabled")
             self.set_status(f"情報取得中: {url}")
@@ -122,6 +122,7 @@ class App(ctk.CTk):
                 with YoutubeDL(options) as ydl:
                     ydl.download(url)
                     self.append_status("ダウンロード完了")
+                    self.progress.set(1.0)
 
             except Exception as e:
                 self.append_status("エラー発生")
