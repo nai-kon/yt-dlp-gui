@@ -1,4 +1,5 @@
 import os
+import re
 import threading
 import tkinter
 import tkinter.filedialog
@@ -74,6 +75,29 @@ class App(ctk.CTk):
         # 起動時にURLがあればDL開始
         # global_paste()
 
+    def rename_file(self, url: str, video_info: dict) -> None | str:
+        def rotate_filename(username: str) -> str:
+            if os.path.exists(f"{self.selected_dir}/{username}.mp4"):
+                # ファイル名が重複したら連番を付与
+                for i in range(1, 100):
+                    username = f"{username}_{i}"
+                    if not os.path.exists(f"{self.selected_dir}/{username}.mp4"):
+                        break
+                else:
+                    raise Exception("同じユーザー名のファイルが多すぎます。")
+            return username
+        
+        
+        if url.startswith("https://x.com/") and (uploader_id:= video_info.get("uploader_id", None)) is not None:
+            return rotate_filename(uploader_id)
+
+        if url.startswith("https://www.tiktok.com/"):
+            # URLからユーザー名を抽出
+            if (username:= re.match(r"https://www\.tiktok\.com/@([^/]+)/", url)) is not None:
+                return rotate_filename(username.group(1))
+
+        return None
+
     def start_download(self) -> None:
         self.progress.set(0)
         url = self.url_entry.get().strip()
@@ -105,18 +129,9 @@ class App(ctk.CTk):
                     info = ydl.extract_info(url, download=False)
                     self.set_status(info["title"][:35] + "...")
 
-                # xの場合はユーザー名をファイル名にする
-                if url.startswith("https://x.com/") and (uploader_id:= info.get("uploader_id", None)) is not None:
-                    if os.path.exists(f"{self.selected_dir}/{uploader_id}.mp4"):
-                        # ファイル名が重複したら連番を付与
-                        for i in range(1, 100):
-                            uploader_id = f"{uploader_id}_{i}"
-                            if not os.path.exists(f"{self.selected_dir}/{uploader_id}.mp4"):
-                                break
-                        else:
-                            raise Exception("同じユーザー名のファイルが多すぎます。")
-
-                    options["outtmpl"] = f"{self.selected_dir}/{uploader_id}.%(ext)s"
+                # xとtiktokはユーザー名をファイル名にする
+                if (user_name := self.rename_file(url, info)) is not None:
+                    options["outtmpl"] = f"{self.selected_dir}/{user_name}.%(ext)s"
 
                 # ダウンロード実行
                 with YoutubeDL(options) as ydl:
