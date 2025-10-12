@@ -91,6 +91,9 @@ class App(ctk.CTk):
         if url.startswith("https://x.com/") and (uploader_id:= video_info.get("uploader_id", None)) is not None:
             return rotate_filename(uploader_id)
 
+        if url.startswith("https://www.facebook.com/") and (uploader:= video_info.get("uploader", None)) is not None:
+            return rotate_filename(uploader)
+
         if url.startswith("https://www.tiktok.com/"):
             # URLからユーザー名を抽出
             if (username:= re.match(r"https://www\.tiktok\.com/@([^/]+)/", url)) is not None:
@@ -154,7 +157,8 @@ class App(ctk.CTk):
             "https://www.youtube.com/watch?v=",
             "https://www.youtube.com/shorts/",
             "https://x.com/",
-            "https://www.tiktok.com/"
+            "https://www.tiktok.com/",
+            "https://www.facebook.com/"
         ]
         return any(url.startswith(prefix) for prefix in valid_prefixes)
 
