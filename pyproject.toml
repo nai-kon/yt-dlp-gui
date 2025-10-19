@@ -8,5 +8,5 @@ dependencies = [
     "customtkinter>=5.2.2",
     "pillow>=11.3.0",
     "pyinstaller>=6.16.0",
-    "yt-dlp[default]>=2025.9.26",
+    "yt-dlp>=2025.10.14",
 ]
