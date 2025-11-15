@@ -118,7 +118,7 @@ class App(ctk.CTk):
                     self.progress.set(d.get("downloaded_bytes", 0) / d.get("total_bytes", 1))
 
             self.download_button.configure(state="disabled")
-            self.set_status(f"情報取得中: {url}")
+            self.set_status("情報取得中...")
 
             try:
                 options = {
@@ -158,7 +158,8 @@ class App(ctk.CTk):
             "https://www.youtube.com/shorts/",
             "https://x.com/",
             "https://www.tiktok.com/",
-            "https://www.facebook.com/"
+            "https://www.facebook.com/",
+            "https://www.instagram.com/"
         ]
         return any(url.startswith(prefix) for prefix in valid_prefixes)
 
