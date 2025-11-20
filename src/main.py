@@ -127,6 +127,9 @@ class App(ctk.CTk):
                     "cookiesfrombrowser": ("firefox",),
                 }
 
+                if url.startswith("https://www.youtube.com/"):
+                    options.pop("cookiesfrombrowser", None)  # 指定すると何故か4k動画がDLできないので当面外す
+
                 # 最初にメタ情報を取得して表示
                 with YoutubeDL(options) as ydl:
                     info = ydl.extract_info(url, download=False)
