@@ -1,4 +1,5 @@
 import os
+import platform
 import re
 import threading
 import tkinter
@@ -64,6 +65,7 @@ class App(ctk.CTk):
                 self.start_download()
 
         self.bind_all("<Control-v>", global_paste)
+        self.bind_all("<Command-v>", global_paste)  # for mac
 
         # ウィンドウがアクティブになったときにクリップボードにURLがあればDL開始
         # def handle_window_activate(event=None):
@@ -188,6 +190,7 @@ class App(ctk.CTk):
 
 if __name__ == "__main__":
     app = App()
-    app.wm_iconbitmap()
-    app.iconphoto(False, ImageTk.PhotoImage(file="logo.ico"))
+    if platform.system() == "Windows":
+        app.wm_iconbitmap()
+        app.iconphoto(False, ImageTk.PhotoImage(file="logo.ico"))
     app.mainloop()

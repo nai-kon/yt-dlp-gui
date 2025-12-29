@@ -44,7 +44,7 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='Video Downloader.app',
-    icon='src/logo.ico'
+    icon='src/logo.ico',
     bundle_identifier=None,
     version='1.0.0'
 )
