@@ -127,10 +127,11 @@ class App(ctk.CTk):
                     "outtmpl": f"{self.selected_dir}/%(title)s.%(ext)s",
                     "progress_hooks": [progress_hook],
                     "cookiesfrombrowser": ("firefox",),
+                    "format": "bestvideo+bestaudio",
                 }
 
-                if url.startswith("https://www.youtube.com/"):
-                    options.pop("cookiesfrombrowser", None)  # 指定すると何故か4k動画がDLできないので当面外す
+                # if url.startswith("https://www.youtube.com/"):
+                #     options.pop("cookiesfrombrowser", None)  # 指定すると何故か4k動画がDLできないので当面外す
 
                 # 最初にメタ情報を取得して表示
                 with YoutubeDL(options) as ydl:
@@ -164,7 +165,7 @@ class App(ctk.CTk):
             "https://x.com/",
             "https://www.tiktok.com/",
             "https://www.facebook.com/",
-            "https://www.instagram.com/"
+            "https://www.instagram.com/",
         ]
         return any(url.startswith(prefix) for prefix in valid_prefixes)
 
