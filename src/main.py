@@ -36,6 +36,11 @@ class App(ctk.CTk):
         self.dir_button = ctk.CTkButton(self.dir_frame, text="選択", width=50, command=self.select_directory)
         self.dir_button.pack(side="right", padx=(5, 0))
 
+        # チェックボックス（cookiesfrombrowserオプション用）
+        self.use_cookie = ctk.CTkCheckBox(self, text="Cookieを使う")
+        self.use_cookie.pack(anchor="w", padx=20, pady=(0, 0))
+        self.use_cookie.deselect()  # デフォルトはOFF
+
         # URL入力 + ダウンロードボタンを右端に配置
         self.url_frame = ctk.CTkFrame(self)
         self.url_frame.pack(padx=20, pady=(10, 5), fill="x")
@@ -126,9 +131,12 @@ class App(ctk.CTk):
                 options = {
                     "outtmpl": f"{self.selected_dir}/%(title)s.%(ext)s",
                     "progress_hooks": [progress_hook],
-                    "cookiesfrombrowser": ("firefox",),
                     "format": "bestvideo+bestaudio",
+                    "embed-thumbnail ": True,
                 }
+                # チェックボックスがONならcookiesfrombrowserを追加
+                if self.use_cookie.get():
+                    options["cookiesfrombrowser"] = ("firefox",)
 
                 # if url.startswith("https://www.youtube.com/"):
                 #     options.pop("cookiesfrombrowser", None)  # 指定すると何故か4k動画がDLできないので当面外す
