@@ -129,17 +129,20 @@ class App(ctk.CTk):
 
             try:
                 options = {
-                    "outtmpl": f"{self.selected_dir}/%(title)s.%(ext)s",
                     "progress_hooks": [progress_hook],
-                    "format": "bestvideo+bestaudio",
-                    "embed-thumbnail ": True,
+                    "format": "bestvideo+m4a/bestaudio",  # m4a形式のaudioじゃないとmp4にマージできない
+                    "merge_output_format": "mp4",
+                    "writethumbnail": True,
+                    "postprocessors": [
+                        {
+                            "key": "EmbedThumbnail",
+                        },
+                    ],
+                    "outtmpl": f"{self.selected_dir}/%(title)s.%(ext)s",
                 }
                 # チェックボックスがONならcookiesfrombrowserを追加
                 if self.use_cookie.get():
                     options["cookiesfrombrowser"] = ("firefox",)
-
-                # if url.startswith("https://www.youtube.com/"):
-                #     options.pop("cookiesfrombrowser", None)  # 指定すると何故か4k動画がDLできないので当面外す
 
                 # 最初にメタ情報を取得して表示
                 with YoutubeDL(options) as ydl:
