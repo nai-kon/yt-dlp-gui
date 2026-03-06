@@ -130,16 +130,30 @@ class App(ctk.CTk):
             try:
                 options = {
                     "progress_hooks": [progress_hook],
-                    "format": "bestvideo+m4a/bestaudio",  # m4a形式のaudioじゃないとmp4にマージできない
-                    "merge_output_format": "mp4",
-                    "writethumbnail": True,
-                    "postprocessors": [
-                        {
-                            "key": "EmbedThumbnail",
-                        },
-                    ],
                     "outtmpl": f"{self.selected_dir}/%(title)s.%(ext)s",
                 }
+
+                # youtube用オプション
+                if url.startswith("https://www.youtube.com/"):
+                    options |= {
+                        "format": "bestvideo+m4a/bestaudio",  # m4a形式のaudioじゃないとmp4にマージできない
+                        # h264形式のmp4に変換するオプション。これがないとav01形式になってlosslesscutで正しくカットできない
+                        "merge_output_format": "mp4",
+                        "postprocessors": [
+                            {
+                                "key": "FFmpegCopyStream",
+                            }
+                        ],
+                        "postprocessor_args": {
+                            "copystream": [
+                                "-c:v", "h264_nvenc",  # CUDAでエンコード。CPUは"libx264"を指定
+                                "-c:a", "aac", 
+                                "-g", "150",  # keyframeを5秒毎(150frame@30fps)
+                                "-f", "mp4"
+                            ]
+                        },
+                    }
+
                 # チェックボックスがONならcookiesfrombrowserを追加
                 if self.use_cookie.get():
                     options["cookiesfrombrowser"] = ("firefox",)
